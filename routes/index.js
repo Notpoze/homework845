@@ -1,11 +1,44 @@
 const { Router } = require("express");
 const { save } = require("../save_json");
 let favouriteNumber = require("../number.json");
+let userText = require("../text.json");
 const add = require("../add");
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 
 const router = new Router();
+
+router.get("/text", async (req, res) => {
+	let my_file = await s3
+		.getObject({
+			Bucket: "cyclic-repulsive-puce-shawl-us-west-1",
+			Key: "text.json",
+		})
+		.promise();
+
+	const text = JSON.parse(my_file.Body)?.userText;
+
+	res.json({
+		Content: text,
+	});
+});
+
+router.post("/text", async (req, res) => {
+	const { text } = req.body;
+	if (text == null) {
+		res.status(400).send("Not provided text");
+		return;
+	}
+
+	await save({
+		userText: text,
+	});
+
+	res.json({
+		status: "success",
+		newContent: text,
+	});
+});
 
 router.get("/sum/:number1/:number2", async (req, res) => {
 	let my_file = await s3
